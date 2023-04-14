@@ -1,3 +1,8 @@
+// This is a simple console application that demonstrates the Singleton pattern.
+// It creates a single instance of a database connection and uses it to perform operations.
+// The Singleton pattern ensures that only one instance of the database connection is created
+// and used throughout the lifetime of the application.
+
 using System;
 
 public sealed class Singleton
