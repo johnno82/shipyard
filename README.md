@@ -1,5 +1,3 @@
-![](https://drive.google.com/drive/folders/1JGc-q8zI8CHVtSdO_IRHOtDSdaLuwzJe)
-
 # Zeal Shipyard
 Ahoy there, matey! This is the Shipyard a code repository wiki that will help you set sail smoothly on your programming journey.
 
