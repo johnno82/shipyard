@@ -7,7 +7,7 @@ Whether you need guidance on setting up a development environment, implementing 
 
 So what are you waiting for? Come aboard Zeal and set sail towards smooth, successful programming projects!
 
-## Start from the 'Wiki' 
+## Start from the Wiki
 Before you dive in, we highly recommend starting with our **[Wiki](https://github.com/johnno82/Shipyard/wiki)**, as it will provide you with a wealth of information and guidance on how to navigate the Shipyard ecosystem.
 
 ## Visit the Wharf
