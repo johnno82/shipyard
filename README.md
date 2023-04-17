@@ -1,3 +1,5 @@
+![Zeal](https://media.licdn.com/dms/image/D4E16AQEG_AcN8mLVfQ/profile-displaybackgroundimage-shrink_350_1400/0/1681767567194?e=1687392000&v=beta&t=N1SlGMGfU5cdRGhiEyqcZi2d11g_q0q-xuO97bIdcPM)
+
 # Zeal Shipyard
 Ahoy there, matey! This is the Shipyard a code repository wiki that will help you set sail smoothly on your programming journey.
 
