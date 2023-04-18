@@ -18,12 +18,18 @@ using Microsoft.Data.SqlClient;
 
 namespace Groton.Core.Data.Repositories
 {
-    public abstract class BaseDataRepository<TEntity>
+    public abstract class DataRepository<TEntity>
     {
-        // You will need to replace this with your actual connection string
-        private readonly string _connectionString = "your_connection_string_here";
+        private readonly string _connectionString;
 
         protected abstract string TableName { get; }
+
+        protected abstract string PrimaryKeyName { get; }
+
+        public DataRepository(string connectionString)
+        {
+            _connectionString = connectionString;
+        }
 
         public void Add(TEntity entity)
         {
@@ -33,15 +39,15 @@ namespace Groton.Core.Data.Repositories
 
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = $"INSERT INTO {TableName} VALUES({GetParametersPlaceholder()});";
-                    command.Parameters.AddRange(CreateDbParameters(entity));
+                    command.CommandText = $"INSERT INTO {TableName} VALUES({GetAddParametersPlaceholder()});";
+                    command.Parameters.AddRange(CreateAddDbParameters(entity));
 
                     command.ExecuteNonQuery();
                 }
             }
         }
 
-        public void Update(TEntity entity)
+        public TEntity? GetById(int id)
         {
             using (var connection = CreateConnection())
             {
@@ -49,40 +55,7 @@ namespace Groton.Core.Data.Repositories
 
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = $"UPDATE {TableName} SET {GetParametersAssignment()} WHERE Id = @Id;";
-                    command.Parameters.AddRange(CreateDbParameters(entity));
-
-                    command.ExecuteNonQuery();
-                }
-            }
-        }
-
-        public void Delete(int id)
-        {
-            using (var connection = CreateConnection())
-            {
-                connection.Open();
-
-                using (var command = connection.CreateCommand())
-                {
-                    command.CommandText = $"DELETE FROM {TableName} WHERE Id = @Id;";
-                    var parameter = CreateParameter("@Id", id);
-                    command.Parameters.Add(parameter);
-
-                    command.ExecuteNonQuery();
-                }
-            }
-        }
-
-        public TEntity? Find(int id)
-        {
-            using (var connection = CreateConnection())
-            {
-                connection.Open();
-
-                using (var command = connection.CreateCommand())
-                {
-                    command.CommandText = $"SELECT * FROM {TableName} WHERE Id = @Id;";
+                    command.CommandText = $"SELECT * FROM {TableName} WHERE {PrimaryKeyName} = @Id;";
                     var parameter = CreateParameter("@Id", id);
                     command.Parameters.Add(parameter);
 
@@ -90,7 +63,7 @@ namespace Groton.Core.Data.Repositories
                     {
                         if (reader.Read())
                         {
-                            return CreateEntity(reader);
+                            return ReadEntity(reader);
                         }
                     }
                 }
@@ -99,7 +72,7 @@ namespace Groton.Core.Data.Repositories
             return default;
         }
 
-        public List<TEntity> FindAll()
+        public TEntity[] GetAll()
         {
             var result = new List<TEntity>();
             using (var connection = CreateConnection())
@@ -114,13 +87,13 @@ namespace Groton.Core.Data.Repositories
                     {
                         while (reader.Read())
                         {
-                            result.Add(CreateEntity(reader));
+                            result.Add(ReadEntity(reader));
                         }
                     }
                 }
             }
 
-            return result;
+            return result.ToArray();
         }
 
         /// <summary>
@@ -140,7 +113,7 @@ namespace Groton.Core.Data.Repositories
         /// This would generate a query similar to:
         /// SELECT * FROM TableName WHERE FirstName = @FirstName AND LastName = @LastName;
         /// </summary>
-        public List<TEntity> FindAll(Dictionary<string, object> filters)
+        public TEntity[] GetAll(IDictionary<string, object> filters)
         {
             var result = new List<TEntity>();
 
@@ -170,13 +143,13 @@ namespace Groton.Core.Data.Repositories
                     {
                         while (reader.Read())
                         {
-                            result.Add(CreateEntity(reader));
+                            result.Add(ReadEntity(reader));
                         }
                     }
                 }
             }
 
-            return result;
+            return result.ToArray();
         }
 
         /// <summary>
@@ -196,7 +169,7 @@ namespace Groton.Core.Data.Repositories
         /// This would generate a query similar to:
         /// SELECT * FROM TableName WHERE FirstName = @FirstName AND LastName = @LastName ORDER BY Id OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
         /// </summary>
-        public List<TEntity> FindAll(Dictionary<string, object> filters, int? pageNumber = null, int? pageSize = null)
+        public TEntity[] GetAll(IDictionary<string, object> filters, int? pageIndex = null, int? pageSize = null)
         {
             var result = new List<TEntity>();
 
@@ -222,10 +195,10 @@ namespace Groton.Core.Data.Repositories
                         command.CommandText += string.Join(" AND ", filterClauses);
                     }
 
-                    if (pageNumber.HasValue && pageSize.HasValue)
+                    if (pageIndex.HasValue && pageSize.HasValue)
                     {
-                        command.CommandText += " ORDER BY Id OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
-                        command.Parameters.Add(CreateParameter("@Offset", (pageNumber.Value - 1) * pageSize.Value));
+                        command.CommandText += $" ORDER BY {PrimaryKeyName} OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
+                        command.Parameters.Add(CreateParameter("@Offset", (pageIndex.Value - 1) * pageSize.Value));
                         command.Parameters.Add(CreateParameter("@PageSize", pageSize.Value));
                     }
 
@@ -233,33 +206,71 @@ namespace Groton.Core.Data.Repositories
                     {
                         while (reader.Read())
                         {
-                            result.Add(CreateEntity(reader));
+                            result.Add(ReadEntity(reader));
                         }
                     }
                 }
             }
 
-            return result;
+            return result.ToArray();
         }
 
-        protected abstract DbParameter[] CreateDbParameters(TEntity entity);
+        public void Update(int id, IDictionary<string, object> changes)
+        {
+            using (var connection = CreateConnection())
+            {
+                connection.Open();
 
-        protected abstract TEntity CreateEntity(IDataRecord record);
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = $"UPDATE {TableName} SET {GetUpdateParametersAssignment(changes)} WHERE {PrimaryKeyName} = @Id;";
+                    command.Parameters.Add(CreateParameter("@Id", id));
+                    command.Parameters.AddRange(CreateUpdateDbParameters(changes));
+
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void Delete(int id)
+        {
+            using (var connection = CreateConnection())
+            {
+                connection.Open();
+
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = $"DELETE FROM {TableName} WHERE {PrimaryKeyName} = @Id;";
+                    command.Parameters.Add(CreateParameter("@Id", id));
+
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        protected abstract TEntity ReadEntity(IDataRecord record);
 
         protected DbParameter CreateParameter(string name, object value)
         {
             return new SqlParameter(name, value);
         }
 
-        private string GetParametersPlaceholder()
+        protected abstract DbParameter[] CreateAddDbParameters(TEntity entity);        
+
+        private string GetAddParametersPlaceholder()
         {
-            var parameters = CreateDbParameters(default);
+            var parameters = CreateAddDbParameters(default);
             return string.Join(", ", Array.ConvertAll(parameters, p => p.ParameterName));
         }
 
-        private string GetParametersAssignment()
+        private DbParameter[] CreateUpdateDbParameters(IDictionary<string, object> changes)
         {
-            var parameters = CreateDbParameters(default);
+            return changes.Select(kvp => CreateParameter(kvp.Key, kvp.Value)).ToArray();
+        }
+
+        private string GetUpdateParametersAssignment(IDictionary<string, object> changes)
+        {
+            var parameters = CreateUpdateDbParameters(changes);
             return string.Join(", ", Array.ConvertAll(parameters, p => $"{p.SourceColumn} = {p.ParameterName}"));
         }
 

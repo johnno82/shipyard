@@ -5,27 +5,33 @@ using System.Data.Common;
 
 namespace Groton.Core.Data.Repositories
 {
-    public class EmployeeDataRepository : BaseDataRepository<Employee>
+    public class EmployeeRepository : DataRepository<Employee>
     {
         protected override string TableName => "Employees";
 
-        protected override DbParameter[] CreateDbParameters(Employee entity)
-        {
-            return new DbParameter[]
-            {
-            CreateParameter("@EmployeeID", entity.EmployeeID),
-            CreateParameter("@Name", entity.Name),
-            CreateParameter("@JobTitle", entity.JobTitle)
-            };
+        protected override string PrimaryKeyName => "EmployeeID";
+
+        public EmployeeRepository(string connectionString) 
+            : base(connectionString)
+        { 
         }
 
-        protected override Employee CreateEntity(IDataRecord record)
+        protected override Employee ReadEntity(IDataRecord record)
         {
             return new Employee
             {
                 EmployeeID = Convert.ToInt32(record["EmployeeID"]),
                 Name = record["Name"].ToString(),
                 JobTitle = record["JobTitle"].ToString()
+            };
+        }
+
+        protected override DbParameter[] CreateAddDbParameters(Employee entity)
+        {
+            return new DbParameter[]
+            {
+                CreateParameter("@Name", entity.Name),
+                CreateParameter("@JobTitle", entity.JobTitle)
             };
         }
     }
