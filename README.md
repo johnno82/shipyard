@@ -13,4 +13,4 @@ So what are you waiting for? Set sail towards smooth, successful programming pro
 Before you dive in, we highly recommend starting with our **[Wiki](https://github.com/johnno82/Shipyard/wiki)**, as it will provide you with a wealth of information and guidance on how to navigate the Shipyard ecosystem.
 
 ## Visit the Wharf
-Once you've familiarized yourself with the Wiki, make sure to check out **[The Wharf](https://github.com/johnno82/Shipyard/wiki)** - a treasure trove of project templates and starter kits to help you kickstart your own projects. With a variety of templates, tools, and resources at your disposal, you'll be able to set sail on your development journey in no time!
+Once you've familiarized yourself with the Wiki, make sure to check out the **[Wharf](https://github.com/johnno82/shipyard/wiki/The-Wharf)** - a treasure trove of project templates and starter kits to help you kickstart your own projects. With a variety of templates, tools, and resources at your disposal, you'll be able to set sail on your development journey in no time!
